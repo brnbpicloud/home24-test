@@ -1,0 +1,100 @@
+{{template "base" . }}
+
+{{define "title"}}
+    URL Tracker
+{{end}}
+
+{{define "content"}}
+  <h2 class="mt-5">URL Analyzer</h2>
+  <hr>
+  <div class="row">
+      <div class="col-md-6 offset-md-3">
+          <div class="alert alert-danger text-center d-none" id="messages"></div>
+          <form id="analyze_form" class="d-block" onsubmit="val(); return false;">
+              <div class="mb-3">
+                  <label for="url" class="form-label">URL</label>
+                  <input type="text" class="form-control" id="url" name="url"
+                      required="" placeholder="https://www.google.com">
+              </div>
+              <button type="submit" class="btn btn-primary">Analyze</button>
+          </form>
+      </div>
+  </div>
+{{end}}
+
+{{define "js"}}
+  <script>
+      let messages = document.getElementById("messages");
+      function showError(msg) {
+          messages.classList.add("alert-danger");
+          messages.classList.remove("alert-success");
+          messages.classList.remove("d-none");
+          messages.innerText = msg;
+      }
+
+      function showSuccess() {
+          messages.classList.remove("alert-danger");
+          messages.classList.add("alert-success");
+          messages.classList.remove("d-none");
+          messages.innerText = "send to analyzer successfully";
+      }
+
+      function isValidURL(urlString) {
+          try {
+              if (!urlString.startsWith("http://") && !urlString.startsWith("https://")) {
+                  return false;
+              }
+              new URL(urlString);
+              return true;
+          } catch (e) {
+              return false;
+          }
+      }
+
+      function val() {
+        let form = document.getElementById("analyze_form");
+        if (form.checkValidity() === false) {
+            this.event.preventDefault();
+            this.event.stopPropagation();
+            form.classList.add("was-validated");
+            return;
+        }
+
+        let urlInput = document.getElementById("url").value.trim();
+
+        if (!isValidURL(urlInput)) {
+            showError("Invalid URL. Please enter a valid URL starting with http:// or https://");
+            return;
+        }
+
+        form.classList.add("was-validated");
+
+        let payload = {
+            url: urlInput,
+        }
+
+        const requestOptions = {
+            method: 'post',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload),
+        }
+
+        fetch("{{.API}}/api/search", requestOptions)
+          .then(response => response.json())
+          .then(data => {
+              console.log(data);
+              if (data.error === false) {
+                  showSuccess();
+                  setTimeout(() => {
+                      window.location.href = '/tracking/' + data.id;
+                  }, 1000);
+              } else {
+                  showError(data.message);
+              }
+          })
+      }
+  </script>
+{{end}}

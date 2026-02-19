@@ -1,0 +1,89 @@
+{{template "base" . }}
+
+{{define "title"}}
+    URL Tracking Item
+{{end}}
+
+{{define "content"}}
+    <div class="container mt-5">
+        {{if .Data.tracker}}
+            <div class="card">
+                <div class="card-header">
+                    <h5>URL Tracking Details</h5>
+                    <a href="/tracking" class="btn btn-sm btn-secondary float-start"> < Back to Dashboard</a>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">ID</dt>
+                        <dd class="col-sm-9">{{.Data.tracker.ID}}</dd>
+
+                        <dt class="col-sm-3">URL</dt>
+                        <dd class="col-sm-9">
+                            <a href="{{.Data.tracker.URL}}" target="_blank">{{.Data.tracker.URL}}</a>
+                        </dd>
+
+                        <dt class="col-sm-3">Status</dt>
+                        <dd class="col-sm-9">
+                            {{if eq .Data.tracker.Status "pending"}}
+                                <span class="badge bg-warning">Pending</span>
+                            {{else if eq .Data.tracker.Status "processing"}}
+                                <span class="badge bg-info">Processing</span>
+                            {{else if eq .Data.tracker.Status "completed"}}
+                                <span class="badge bg-success">Completed</span>
+                            {{else if eq .Data.tracker.Status "failed"}}
+                                <span class="badge bg-danger">Failed</span>
+                            {{else}}
+                                <span class="badge bg-secondary">{{.Data.tracker.Status}}</span>
+                            {{end}}
+                        </dd>
+
+                        <dt class="col-sm-3">Created At</dt>
+                        <dd class="col-sm-9">{{.Data.tracker.CreatedAt.Format "Jan 02, 2006 15:04:05"}}</dd>
+
+                        <dt class="col-sm-3">Updated At</dt>
+                        <dd class="col-sm-9">{{.Data.tracker.UpdatedAt.Format "Jan 02, 2006 15:04:05"}}</dd>
+
+                        {{if .Data.tracker.Result}}
+                            <dt class="col-sm-3">Analysis Result</dt>
+                            <dd class="col-sm-9">
+                                {{$parsed := parseResult .Data.tracker.Result}}
+                                <div class="result-details">
+                                    <div><strong>Title:</strong> {{index $parsed "title"}}</div>
+                                    <div><strong>HTML Version:</strong> {{index $parsed "html_version"}}</div>
+                                      <div>
+                                          <strong>Headings:</strong>
+                                          {{$headings := index $parsed "heading_counts"}}
+                                          <ul style="margin: 4px 0 0 20px; font-size: 0.9rem;">
+                                              {{range $h, $count := $headings}}<li>{{$h}}: {{$count}}</li>{{end}}
+                                          </ul>
+                                      </div>
+                                    <div><strong>Internal Links:</strong> {{index $parsed "internal_links"}}</div>
+                                    <div><strong>External Links:</strong> {{index $parsed "external_links"}}</div>
+                                    <div><strong>Inaccessible Links:</strong> {{index $parsed "inaccessible_links"}}</div>
+                                    <div><strong>Has Login Form:</strong> {{index $parsed "has_login_form"}}</div>
+                                </div>
+                            </dd>
+                        {{end}}
+
+                        {{if .Data.tracker.Error}}
+                            <dt class="col-sm-3">Error</dt>
+                            <dd class="col-sm-9"><span class="text-danger">{{.Data.tracker.Error}}</span></dd>
+                        {{end}}
+                    </dl>
+                </div>
+            </div>
+        {{else}}
+            <div class="alert">
+                <span>Tracker not found</span>
+            </div>
+        {{end}}
+    </div>
+{{end}}
+
+{{define "js"}}
+  <script>
+      setTimeout(function() {
+          location.reload();
+      }, 3000);
+  </script>
+{{end}}

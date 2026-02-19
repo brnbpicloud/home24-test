@@ -1,0 +1,71 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: url_tracker_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - app_network
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: url_tracker_api
+    ports:
+      - "4001:4001"
+    environment:
+      - REDIS_ADDR=redis:6379
+      - SERVER_PORT=4001
+    depends_on:
+      - redis
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    container_name: url_tracker_web
+    ports:
+      - "4000:4000"
+    environment:
+      - API_ADDR=http://localhost:4001
+      - SERVER_PORT=4000
+      - REDIS_ADDR=redis:6379
+    depends_on:
+      - redis
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    container_name: url_tracker_worker
+    environment:
+      - REDIS_ADDR=redis:6379
+    depends_on:
+      - redis
+    networks:
+      - app_network
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+
+networks:
+  app_network:
+    driver: bridge
